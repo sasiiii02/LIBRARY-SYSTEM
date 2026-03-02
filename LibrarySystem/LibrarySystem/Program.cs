@@ -1,66 +1,87 @@
 // File: Program.cs
-// Purpose: Configures and starts the application
+// Purpose: Application entry point - configures and starts the web server
+// This is where we set up all services, middleware, and dependencies
 
-using Microsoft.EntityFrameworkCore;      // For database
-using LibrarySystem.Data;                  // Our database context
+using Microsoft.EntityFrameworkCore;      // For database functionality
+using LibrarySystem.Data;                  // Our custom database context
 
+// Create a builder object that helps configure our application
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
-// This enables controllers (like BooksController)
+// ========== ADD SERVICES TO THE CONTAINER ==========
+// Services are reusable components that can be injected into controllers
+
+// Add controller services - this enables MVC controllers (like BooksController)
+// Controllers handle HTTP requests and return responses
 builder.Services.AddControllers();
 
-// Configure SQLite Database
-// This tells our app to use SQLite with a file named "library.db"
+// Configure SQLite database connection
+// AddDbContext registers our AppDbContext with dependency injection
+// It tells the app to use SQLite with a database file named "library.db"
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=library.db"));
 
-// Learn more about configuring Swagger/OpenAPI
+// Add Swagger/OpenAPI services for API documentation
+// This automatically generates documentation at /swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// IMPORTANT: Configure CORS to allow React app to call this API
+// Configure CORS (Cross-Origin Resource Sharing)
+// This allows our React frontend (running on a different port) to call this API
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
         policy =>
         {
-            // Allow requests from React app (default port 3000)
+            // AllowAnyOrigin() means any domain can call this API
+            // In production, you'd restrict this to your actual frontend URL
             policy.AllowAnyOrigin()
-      .AllowAnyMethod()
-      .AllowAnyHeader();     // Allow any headers
+                  .AllowAnyMethod()      // Allow GET, POST, PUT, DELETE, etc.
+                  .AllowAnyHeader();      // Allow any HTTP headers
         });
 });
 
+// Build the application with all configured services
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+// ========== CONFIGURE THE HTTP REQUEST PIPELINE ==========
+// This determines how the app handles incoming HTTP requests
+
+// Enable Swagger only in development environment
+// This ensures API documentation isn't exposed in production
 if (app.Environment.IsDevelopment())
 {
-    // Swagger helps test API (available at /swagger)
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwagger();           // Generate Swagger JSON
+    app.UseSwaggerUI();         // Serve Swagger UI at /swagger
 }
 
-// Redirect HTTP to HTTPS
+// Redirect HTTP requests to HTTPS for security
 app.UseHttpsRedirection();
 
-// Enable CORS (must be before MapControllers)
+// Enable CORS - must be called before MapControllers
+// This applies the CORS policy we defined above
 app.UseCors("AllowReactApp");
 
-// Enable authorization (not using yet, but keep it)
+// Enable authorization middleware
+// Even though we're not using auth now, it's good to have for future
 app.UseAuthorization();
 
-// Map controllers to routes
+// Map controller endpoints to routes
+// This connects URLs like /api/books to the appropriate controller actions
 app.MapControllers();
 
-// Create database on startup if it doesn't exist
+// ========== DATABASE INITIALIZATION ==========
+// Create the database on startup if it doesn't already exist
 using (var scope = app.Services.CreateScope())
 {
+    // Get our database context from the service scope
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    // This creates the database file and tables
+    
+    // EnsureCreated creates the database file and tables if they don't exist
+    // It also runs the seed data from OnModelCreating
     dbContext.Database.EnsureCreated();
+    // Note: In production, you'd use Migrations instead of EnsureCreated
 }
 
-// Start the application
+// Start the application and begin listening for HTTP requests
 app.Run();
