@@ -1,7 +1,7 @@
 # Library Management System - Development Report
 
-**Author:** [Your Name]
-**Date:** March 2026
+**Author:** Sasanka Karunarathna
+**Date:** 2 nd of March 2026
 **Repository:** https://github.com/sasiiii02/LIBRARY-SYSTEM
 
 ## 1. Introduction
@@ -132,6 +132,5 @@ The application is fully functional, well-documented, and ready for review. All 
 
 **GitHub Repository:** https://github.com/sasiiii02/LIBRARY-SYSTEM  
 **Submitted to:** Expernetic  
-**Contact:** [Your Email]
 
 *This project is submitted as part of the Software Engineering Internship application process.*
